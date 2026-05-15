@@ -5,20 +5,13 @@ def transform_customers(df):
         "`Customer ID` as customer_id",
         "`Customer Name` as customer_name",
         "Country as country",
-        "Segment as segment",
-        "City as city",
-        "State as state",
-        "`Postal Code` as postal_code",
-        "Region as region"
+        "phone"
     )
 
     df = (
         df.withColumn("customer_id", F.trim(F.col("customer_id")))
           .withColumn("customer_name", F.trim(F.col("customer_name")))
           .withColumn("country", F.trim(F.col("country")))
-          .withColumn("segment", F.trim(F.col("segment")))
-          .withColumn("city", F.trim(F.col("city")))
-          .withColumn("state", F.trim(F.col("state")))
 
           # Clean name
           .withColumn(
@@ -31,21 +24,17 @@ def transform_customers(df):
                   )
               )
           )
-
-          # Postal code normalization
-          .withColumn("postal_code", F.col("postal_code").cast("string"))
     )
 
     # Phone cleaning
-    if "phone" in df.columns:
-        df = df.withColumn(
-            "phone_clean",
-            F.when(
-                F.col("phone").isin("#ERROR!", "", "null", "NULL") |
-                (F.trim(F.col("phone")) == ""),
-                F.lit(None)
-            ).otherwise(F.trim(F.col("phone")))
-        )
+    df = df.withColumn(
+        "phone_clean",
+        F.when(
+            F.col("phone").isin("#ERROR!", "", "null", "NULL") |
+            (F.trim(F.col("phone")) == ""),
+            F.lit(None)
+        ).otherwise(F.trim(F.col("phone")))
+    )
 
     df = (
         df.filter(
