@@ -46,7 +46,7 @@ def transform_orders(df):
 
     return df
 
-    def build_orders_enriched(orders_df, customers_df, products_df):
+def build_orders_enriched(orders_df, customers_df, products_df):
     return (
         orders_df.alias("o")
         .join(F.broadcast(customers_df.alias("c")), "customer_id", "left")
