@@ -1,11 +1,11 @@
 from pyspark.sql import functions as F
 
 def transform_customers(df):
-    df = df.selectExpr(
-        "`Customer ID` as customer_id",
-        "`Customer Name` as customer_name",
-        "Country as country",
-        "phone"
+    df = df.select(
+        F.col("`Customer ID`").alias("customer_id"),
+        F.col("`Customer Name`").alias("customer_name"),
+        F.col("Country").alias("country"),
+        F.col("phone")
     )
 
     df = (
@@ -24,16 +24,17 @@ def transform_customers(df):
                   )
               )
           )
-    )
 
-    # Phone cleaning
-    df = df.withColumn(
-        "phone_clean",
-        F.when(
-            F.col("phone").isin("#ERROR!", "", "null", "NULL") |
-            (F.trim(F.col("phone")) == ""),
-            F.lit(None)
-        ).otherwise(F.trim(F.col("phone")))
+          # Phone No. cleaning
+          .withColumn(
+              "phone_clean",
+              F.when(
+                  F.col("phone").isNull() |
+                  F.col("phone").isin("#ERROR!", "", "null", "NULL") |
+                  (F.trim(F.col("phone")) == ""),
+                  F.lit(None)
+              ).otherwise(F.trim(F.col("phone")))
+          )
     )
 
     df = (
