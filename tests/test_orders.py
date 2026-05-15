@@ -26,9 +26,15 @@ def test_order_date_parsing(spark, order_date_input, expected):
         "Profit": 1.23
     })])
 
-    row = transform_orders(df).first()
+    result = transform_orders(df)
 
-    assert row["order_date"] == expected
+    if expected is None:
+        # Bad dates are filtered out by transform_orders
+        assert result.count() == 0
+    else:
+        row = result.first()
+        assert row is not None
+        assert row["order_date"] == expected
 
 
 # 2. Ship Date Parsing
