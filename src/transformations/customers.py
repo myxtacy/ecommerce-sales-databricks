@@ -5,7 +5,8 @@ def transform_customers(df):
         F.col("`Customer ID`").alias("customer_id"),
         F.col("`Customer Name`").alias("customer_name"),
         F.col("Country").alias("country"),
-        F.col("phone")
+        F.coalesce(F.col("phone").cast("string"), F.lit(""))
+        .alias("phone")
     )
 
     df = df.withColumn("phone", F.col("phone").cast("string"))
