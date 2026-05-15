@@ -1,7 +1,41 @@
 import pytest
 from pyspark.sql import Row
+from pyspark.sql.types import (
+    StructType, StructField,
+    StringType, IntegerType, DoubleType
+)
 from src.transformations.orders import build_orders_enriched
 from src.transformations.aggregates import aggregate_profit
+
+
+ORDERS_SCHEMA = StructType([
+    StructField("row_id", IntegerType(), True),
+    StructField("order_id", StringType(), True),
+    StructField("order_date", StringType(), True),
+    StructField("ship_date", StringType(), True),
+    StructField("ship_mode", StringType(), True),
+    StructField("order_year", IntegerType(), True),
+    StructField("customer_id", StringType(), True),
+    StructField("product_id", StringType(), True),
+    StructField("quantity", IntegerType(), True),
+    StructField("sales_amount", DoubleType(), True),
+    StructField("discount", DoubleType(), True),
+    StructField("profit", DoubleType(), True),
+])
+
+CUSTOMERS_SCHEMA = StructType([
+    StructField("customer_id", StringType(), True),
+    StructField("customer_name", StringType(), True),
+    StructField("customer_name_clean", StringType(), True),
+    StructField("country", StringType(), True),
+])
+
+PRODUCTS_SCHEMA = StructType([
+    StructField("product_id", StringType(), True),
+    StructField("product_name", StringType(), True),
+    StructField("product_category", StringType(), True),
+    StructField("product_sub_category", StringType(), True),
+])
 
 
 # 1. Orders Enrichment (Join Scenarios)
@@ -23,40 +57,20 @@ def test_orders_enrichment(
     spark, customer_id, product_id,
     exp_customer, exp_country, exp_category, exp_sub_category
 ):
-    orders_df = spark.createDataFrame([
-        Row(
-            row_id=1,
-            order_id="O1",
-            order_date=None,
-            ship_date=None,
-            ship_mode="Standard",
-            order_year=2017,
-            customer_id=customer_id,
-            product_id=product_id,
-            quantity=1,
-            sales_amount=100.0,
-            discount=0.0,
-            profit=20.0
-        )
-    ])
+    orders_df = spark.createDataFrame(
+        [(1, "O1", None, None, "Standard", 2017, customer_id, product_id, 1, 100.0, 0.0, 20.0)],
+        schema=ORDERS_SCHEMA
+    )
 
-    customers_df = spark.createDataFrame([
-        Row(
-            customer_id="C1",
-            customer_name="Alice Raw",
-            customer_name_clean="Alice",
-            country="United States"
-        )
-    ])
+    customers_df = spark.createDataFrame(
+        [("C1", "Alice Raw", "Alice", "United States")],
+        schema=CUSTOMERS_SCHEMA
+    )
 
-    products_df = spark.createDataFrame([
-        Row(
-            product_id="P1",
-            product_name="Phone",
-            product_category="Technology",
-            product_sub_category="Phones"
-        )
-    ])
+    products_df = spark.createDataFrame(
+        [("P1", "Phone", "Technology", "Phones")],
+        schema=PRODUCTS_SCHEMA
+    )
 
     row = build_orders_enriched(orders_df, customers_df, products_df).first()
 
@@ -77,22 +91,23 @@ def test_orders_enrichment(
 )
 @pytest.mark.regression
 def test_profit_aggregation(spark, profits, expected_total):
+    schema = StructType([
+        StructField("order_year", IntegerType(), True),
+        StructField("product_category", StringType(), True),
+        StructField("product_sub_category", StringType(), True),
+        StructField("customer_id", StringType(), True),
+        StructField("customer_name", StringType(), True),
+        StructField("profit", DoubleType(), True),
+    ])
+
     rows = [
-        Row(
-            order_year=2017,
-            product_category="Technology",
-            product_sub_category="Phones",
-            customer_id="C1",
-            customer_name="Alice",
-            profit=p
-        )
+        (2017, "Technology", "Phones", "C1", "Alice", p)
         for p in profits
     ]
 
-    df = spark.createDataFrame(rows)
+    df = spark.createDataFrame(rows, schema=schema)
     result = aggregate_profit(df).first()
 
-    # Approx for float safety
     assert result["total_profit"] == pytest.approx(expected_total, 0.01)
 
 
