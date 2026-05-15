@@ -8,6 +8,8 @@ def transform_customers(df):
         F.col("phone")
     )
 
+    df = df.withColumn("phone", F.col("phone").cast("string"))
+
     df = (
         df.withColumn("customer_id", F.trim(F.col("customer_id")))
           .withColumn("customer_name", F.trim(F.col("customer_name")))
@@ -25,7 +27,7 @@ def transform_customers(df):
               )
           )
 
-          # Phone No. cleaning
+          # Phone cleaning
           .withColumn(
               "phone_clean",
               F.when(
