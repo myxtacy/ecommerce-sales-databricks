@@ -22,7 +22,7 @@ def aggregate_profit(df):
             F.first("customer_name", ignorenulls=True).alias("customer_name"),
 
             F.round(
-                F.sum("profit"),   #
+                F.sum("profit"), 
                 2
             ).alias("total_profit")
         )
