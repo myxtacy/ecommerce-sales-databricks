@@ -18,15 +18,6 @@ def aggregate_profit(df):
             F.round(
                 F.sum(F.coalesce(F.col("profit"), F.lit(0))),
                 2
-            ).alias("total_profit"),
-
-            F.round(
-                F.sum(F.coalesce(F.col("sales_amount"), F.lit(0))),
-                2
-            ).alias("total_sales"),
-
-            F.sum(
-                F.coalesce(F.col("quantity"), F.lit(0))
-            ).alias("total_quantity")
+            ).alias("total_profit")
         )
     )
