@@ -32,7 +32,7 @@ def transform_customers(df):
                   F.col("phone").isNull() |
                   F.col("phone").isin("#ERROR!", "", "null", "NULL") |
                   (F.trim(F.col("phone")) == ""),
-                  F.lit(None)
+                  F.lit(None).cast("string")
               ).otherwise(F.trim(F.col("phone")))
           )
     )
