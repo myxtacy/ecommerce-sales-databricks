@@ -1,5 +1,6 @@
 import pytest
 from pyspark.sql import Row
+from pyspark.sql.types import StructType, StructField, StringType
 from src.transformations.customers import transform_customers
 
 
@@ -31,12 +32,17 @@ def test_customer_name_cleaning(spark, input_name, expected):
 ])
 @pytest.mark.regression
 def test_customer_phone_cleaning(spark, phone_input):
-    df = spark.createDataFrame([Row(**{
-        "Customer ID": "C2",
-        "Customer Name": "Test User",
-        "phone": phone_input,
-        "Country": "United States"
-    })])
+    schema = StructType([
+        StructField("Customer ID", StringType(), True),
+        StructField("Customer Name", StringType(), True),
+        StructField("phone", StringType(), True),
+        StructField("Country", StringType(), True),
+    ])
+
+    df = spark.createDataFrame(
+        [("C2", "Test User", phone_input, "United States")],
+        schema=schema
+    )
 
     row = transform_customers(df).first()
 
